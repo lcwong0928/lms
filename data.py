@@ -1,41 +1,3 @@
-url_nyse = "http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nyse&render=download"
-url_nasdaq = "http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nasdaq&render=download"
-url_amex = "http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=amex&render=download"
-
-import pandas as pd
-def stock_list(url):
-    '''returns a list of all avaiable stocks from given url'''
-    df = pd.DataFrame.from_csv(url)
-    stocks = df.index.tolist()
-    return stocks
-
-
-
-#https://www.alphavantage.co/documentation/#
-
-import requests
-import json
-import pprint
-
-def company_daily(symbol):
-    '''returns daily stock information in json format of given company'''
-    
-    url = "https://www.alphavantage.co/query"
-
-    function = "TIME_SERIES_DAILY"
-    symbol = "MSFT"
-    api_key = "ZQR7B11XFTLJECJU"
-
-    data = { "function": function, 
-             "symbol": symbol, 
-             "apikey": api_key } 
-    page = requests.get(url, params = data)
-    #pprint.pprint(page.json())
-    return page.json()
-
-
-
-
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
@@ -45,7 +7,8 @@ def json_to_dataframe(data):
     jdata = json.loads(json.dumps(data))
     df = pd.DataFrame(jdata).transpose().astype(float)
     df["Date"] = pd.to_datetime(df.index)
-    df.columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'Date']
+    df.columns = ['Open', 'High', 'Low', 'Close', 'Adjusted close',
+                  'Volume', 'Dividend amount', 'Split coefficient', 'Date']
 
     return df.set_index('Date')
 
@@ -68,9 +31,13 @@ def candlestick(df):
     pandas_candlestick_ohlc(df)
 
 
+
+from fetch_data import *
+
 def testcase():    
     symbol = "AAPL"
-    data = company_daily(symbol)['Time Series (Daily)']
+    datatype = "json"
+    data = company_daily_adjusted(symbol, "json", "compact")['Time Series (Daily)']
     df = json_to_dataframe(data)
     simple_linechart(symbol, df)
     candlestick(df)
