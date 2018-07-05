@@ -7,7 +7,7 @@ import pandas as pd
 def stock_list(url):
     '''returns a list of all avaiable stocks from given url'''
     df = pd.read_csv(url)
-    stocks = df["Symbol"].tolist()[10:]
+    stocks = df["Symbol"].tolist()[17:1213]
     return stocks
 
 
@@ -44,8 +44,8 @@ import csv
 def write_csv(symbol, csv_data):
     '''creates csv file'''
     
-    rep = "csv_2018_07_04/"
-    with open(rep + symbol + '.csv', 'w', newline='') as f:
+    directory = "csv_2018_07_04/"
+    with open(directory + symbol + '.csv', 'w', newline='') as f:
         writer = csv.writer(f)
         reader = csv.reader(csv_data.text.splitlines())
 
@@ -59,22 +59,23 @@ import json, codecs
 def write_json(symbol, json_data):
     '''creates json file'''
 
-    rep = "json_2018_07_04/"
-    with open(rep + symbol + '.txt', 'w') as f:
+    directory = "json_2018_07_04/"
+    with open(directory + symbol + '.json', 'w') as f:
         json.dump(json_data, f)
 
 
 import time
+
 def pull_data(name):
-    counter = 0
+    counter = 17
     for symbol in stock_list(url[name]):
-        write_csv(symbol, company_daily_adjusted(symbol, "csv"))
+        #write_csv(symbol, company_daily_adjusted(symbol, "csv"))
         write_json(symbol, company_daily_adjusted(symbol, "json"))
-        time.sleep(15)
+        time.sleep(10)
         counter += 1
         print(counter, symbol)
-
-
+    
+pull_data("nyse")
 
         
 
