@@ -131,9 +131,10 @@ class Lms(object):
             parser = argparse.ArgumentParser(description='attempts to pull in all stock information')
             parser.add_argument('start', type=int, help="0th index")
             parser.add_argument('-s', '--source', help="nyse, nasdaq, amex", type=str, default="nyse")
+            parser.add_argument('-k', '--key', help="api key", type=str, default="ZQR7B11XFTLJECJU")
             args = parser.parse_args(sys.argv[3:])
         
-            pull_data(args.source, args.start)
+            pull_data(args.source, args.start, args.key)
             
                 
 if __name__ == '__main__':

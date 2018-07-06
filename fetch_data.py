@@ -19,14 +19,13 @@ import requests
 import json
 import pprint
 
-def company_daily_adjusted(symbol, datatype="json", outputsize="full"):
+def company_daily_adjusted(symbol, datatype="json", outputsize="full", api_key="ZQR7B11XFTLJECJU"):
     '''returns daily stock information in json format of given company'''
 
     symbol = symbol.upper()
     url = "https://www.alphavantage.co/query"
 
     function = "TIME_SERIES_DAILY_ADJUSTED"
-    api_key = "ZQR7B11XFTLJECJU"
 
     data = { "function": function, 
              "symbol": symbol, 
@@ -66,15 +65,23 @@ def write_json(symbol, json_data):
 
 import time
 
-def pull_data(name, start):
+def pull_data(name, start=0, api_key="ZQR7B11XFTLJECJU"):
     counter = start
     for symbol in stock_list(url[name])[start:]:
         if '^' not in symbol:
-            write_csv(symbol, company_daily_adjusted(symbol, "csv"))
-            write_json(symbol, company_daily_adjusted(symbol, "json"))
-            time.sleep(20)
+            time.sleep(10)
+            write_csv(symbol, company_daily_adjusted(symbol, "csv", api_key=api_key))
+            time.sleep(10)
+            write_json(symbol, company_daily_adjusted(symbol, "json", api_key=api_key))
             print(counter, symbol)
         counter += 1
+
+
+if __name__ == "__main__":
+    pass
+    
+    
+    
 
         
 
