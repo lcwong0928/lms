@@ -5,9 +5,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.dates import DateFormatter, WeekdayLocator, DayLocator, MONDAY
-from matplotlib.finance import candlestick_ohlc
+import mpl_finance
  
-def pandas_candlestick_ohlc(dat, stick = "day", otherseries = None):
+def pandas_candlestick_ohlc(dat, stick = "day", otherseries = None, block = False):
     """
     :param dat: pandas DataFrame object with datetime64 index, and float columns "Open", "High", "Low", and "Close", likely created via DataReader from "yahoo"
     :param stick: A string or number indicating the period of time covered by a single candlestick. Valid string inputs include "day", "week", "month", and "year", ("day" default), and any numeric input indicates the number of trading days included in a period
@@ -86,4 +86,4 @@ def pandas_candlestick_ohlc(dat, stick = "day", otherseries = None):
     ax.autoscale_view()
     plt.setp(plt.gca().get_xticklabels(), rotation=45, horizontalalignment='right')
  
-    plt.show(block=False)
+    plt.show(block=block)

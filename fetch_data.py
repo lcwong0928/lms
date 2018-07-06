@@ -7,7 +7,7 @@ import pandas as pd
 def stock_list(url):
     '''returns a list of all avaiable stocks from given url'''
     df = pd.read_csv(url)
-    stocks = df["Symbol"].tolist()[17:1213]
+    stocks = df["Symbol"].tolist()
     return stocks
 
 
@@ -19,9 +19,10 @@ import requests
 import json
 import pprint
 
-def company_daily_adjusted(symbol, datatype, outputsize="full"):
+def company_daily_adjusted(symbol, datatype="json", outputsize="full"):
     '''returns daily stock information in json format of given company'''
-    
+
+    symbol = symbol.upper()
     url = "https://www.alphavantage.co/query"
 
     function = "TIME_SERIES_DAILY_ADJUSTED"
@@ -32,9 +33,8 @@ def company_daily_adjusted(symbol, datatype, outputsize="full"):
              "apikey": api_key,
              "outputsize": outputsize,
              "datatype": datatype}
-    
+
     data = requests.get(url, params = data)
-    #pprint.pprint(data.json())
     return data if datatype == "csv" else data.json()
 
 
@@ -66,16 +66,15 @@ def write_json(symbol, json_data):
 
 import time
 
-def pull_data(name):
-    counter = 17
-    for symbol in stock_list(url[name]):
-        #write_csv(symbol, company_daily_adjusted(symbol, "csv"))
-        write_json(symbol, company_daily_adjusted(symbol, "json"))
-        time.sleep(10)
+def pull_data(name, start):
+    counter = start
+    for symbol in stock_list(url[name])[start:]:
+        if '^' not in symbol:
+            write_csv(symbol, company_daily_adjusted(symbol, "csv"))
+            write_json(symbol, company_daily_adjusted(symbol, "json"))
+            time.sleep(20)
+            print(counter, symbol)
         counter += 1
-        print(counter, symbol)
-    
-pull_data("nyse")
 
         
 
