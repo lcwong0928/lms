@@ -1,7 +1,13 @@
-from json_parser import *
-from pandas_candlestick_ohlc import *
-from ma import *
+from . import parse, candlestick
+from ..backtest import ma
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+
+
+def nearest(items, pivot):
+    """used to serach for items in any collection"""
+    return min(items, key=lambda x: abs(x - pivot))
 
 
 def clip(df, start, end):
@@ -9,35 +15,47 @@ def clip(df, start, end):
     return df[start:end] if (start, end) != (None, None) else df
 
 
-def simple_linechart(symbol, start=None, end=None, block=False):
+def simple_linechart(symbol, root_dir, func, start=None, end=None, save=False):
     """produces line chart of symbol from given start and end"""
 
-    jdata = load_json(symbol)
-    df, metadata = clip(dataframe(load_json(symbol)), start, end), jdata["Meta Data"]
+    load_dir = root_dir + "/lms/data/json/" + func + "/"
+    json_data = parse.load_json(symbol, load_dir, func)
+    df, metadata = clip(parse.dataframe(json_data, func), start, end), json_data["Meta Data"]
 
     title = metadata['1. Information'] + " for " + metadata["2. Symbol"] + " as of " + metadata['3. Last Refreshed']
     ax = df.plot(y=df.columns[0:4], title=title, figsize=(10, 7), grid=True)
     ax.set_xlabel("Date", fontsize=12)
     ax.set_ylabel("Dollars($)", fontsize=12)
-    plt.show(block=block)
+
+    if save:
+        save_dir = root_dir + "/lms/data/graphs/simple_linechart/" + func + "/"
+        plt.savefig(save_dir + symbol + ".png", dpi=100)
 
 
-def candlestick(symbol, start=None, end=None, block=False):
+def candlesticks(symbol, root_dir, func, start=None, end=None, save=False):
     """produces a candlestick of the given symbol and time frame"""
-    df = clip(dataframe(load_json(symbol)), start, end)
-    pandas_candlestick_ohlc(df, block=block, symbol=symbol)
+
+    load_dir = root_dir + "/lms/data/json/" + func + "/"
+    json_data = parse.load_json(symbol, load_dir, func)
+    df = clip(parse.dataframe(json_data, func), start, end)
+    candlestick.pandas_candlestick_ohlc(df, symbol=symbol)
+
+    if save:
+        save_dir = root_dir + "/lms/data/graphs/candlestick/" + func + "/"
+        plt.savefig(save_dir + symbol + ".png", dpi=100)
 
 
-def graph_model(symbols, func, start=None, end=None, block=False):
-    if not isinstance(symbols, list):
-        symbols = [symbols]
+def graph_model(method, symbols, root_dir, func, start=None, end=None, save=False):
+    "various models of the given data"
 
-    data = [clip(dataframe(load_json(symbol)), start, end)["Adjusted close"] for symbol in symbols]
+    load_dir = root_dir + "/lms/data/json/" + func + "/"
+    data = [clip(parse.dataframe(parse.load_json(
+        symbol, load_dir, func), func), start, end)["Adjusted close"] for symbol in symbols]
 
     df = pd.concat(data, axis=1)
     df = df.dropna()
     df.columns = symbols
-    stock_return = df.apply(models[func])
+    stock_return = df.apply(models[method])
 
     ax = stock_return.plot(figsize=(10, 7), fontsize=12, grid=True)
     ax.set_xlabel("Date", fontsize=12)
@@ -53,12 +71,19 @@ def graph_model(symbols, func, start=None, end=None, block=False):
         ax.set_ylabel("Growth per day", fontsize=12)
         ax.axhline(y=0, color="black", lw=1)
 
+    elif func == "increase":
+        plt.title("Increase starting from " + start)
+        ax.set_ylabel("Increase per day", fontsize=12)
+        ax.axhline(y=0, color="black", lw=1)
+
     elif func == "change":
         plt.title("Log Change starting from " + start)
         ax.set_ylabel("Change per day", fontsize=12)
         ax.axhline(y=0, color="black", lw=1)
 
-    plt.show(block=block)
+    if save:
+        save_dir = root_dir + "/lms/data/graphs/model/" + method + "/" + func + "/"
+        plt.savefig(save_dir + str(symbols) + ".png", dpi=100)
 
 
 def p_return(x):
@@ -102,45 +127,24 @@ models = {"return": p_return,
           "change": change}
 
 
-def moving_averages(symbol, start=None, end=None, block=False):
-    stock = dataframe(load_json(symbol))
-
-    stock["20d"] = np.round(stock["Close"].rolling(window=20, center=False).mean(), 2)
-    stock["50d"] = np.round(stock["Close"].rolling(window=50, center=False).mean(), 2)
-    stock["200d"] = np.round(stock["Close"].rolling(window=200, center=False).mean(), 2)
-    pandas_candlestick_ohlc(stock.loc[start:end, :], otherseries=["20d", "50d", "200d"], block=block, symbol=symbol)
-
-
-def moving_averages_adv(symbol, ma, start=None, end=None, block=False):
+def moving_averages(symbol, moving_averages, root_dir, func, start=None, end=None, save=False):
     """Graphical representation of desired moving averages
     :param symbol string of the company symbol
     :param ma int or list[int] of moving averages
     :param start, end string of date in YEAR-MN-DY format
     :return candlestick representation of the data"""
 
-    stock = ohlc_adj(dataframe(load_json(symbol)))
+    load_dir = root_dir + "/lms/data/json/" + func + "/"
+    stock = ma.ohlc_adj(parse.dataframe(parse.load_json(symbol, load_dir, func), func))
     otherseries = []
-    for num in list(ma):
+    for num in list(moving_averages):
         day = str(num) + "d"
         otherseries.append(day)
-        stock[day] = np.round(stock["Close"].rolling(window=num, center=False).mean(), 1)
-    pandas_candlestick_ohlc(stock.loc[start:end, :], otherseries=otherseries, block=block, symbol=symbol)
+        stock[day] = np.round(stock["Close"].rolling(window=num, center=False).mean(), 2)
 
+    candlestick.pandas_candlestick_ohlc(stock.loc[start:end, :], otherseries=otherseries, symbol=symbol)
 
-def package(symbol, start=None, end=None):
-    graph_model(symbol, "return", start, end)
-    graph_model(symbol, "change", start, end)
-    moving_averages(symbol, start, end)
+    if save:
+        save_dir = root_dir + "/lms/data/graphs/moving_averages/" + func + "/"
+        plt.savefig(save_dir + symbol + ".png", dpi=100)
 
-
-if __name__ == "__main__":
-    # symbol = "aapl"
-    # simple_linechart(symbol, "2018-07-03", "2018-01-03")
-    # candlestick(symbol, "2018-07-03", "2018-01-03")
-    # graph_model(["Y", "ARE", "DDD"], "return", "2018-01-03", "2018-07-03")
-    # graph_model(["Y", "ARE", "DDD"], "growth", "2018-07-03", "2018-01-03")
-    # graph_model(["Y", "ARE", "DDD"], "increase", "2018-07-03", "2018-01-03")
-    # graph_model(["Y", "ARE", "DDD"], "change", "2018-07-03", "2018-01-03")
-    # moving_averages(symbol, '2016-01-04', '2016-08-07')
-    # package(symbol)
-    pass

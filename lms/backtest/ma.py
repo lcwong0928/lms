@@ -1,7 +1,8 @@
-from single_back_test import *
-from multi_backtest import *
-from visualize import *
+# from single_back_test import *
+# from multi_backtest import *
+# from visualize import *
 import numpy as np
+import pandas as pd
 
 '''Analysis via moving averages'''
 
@@ -151,16 +152,16 @@ def multicrossover(stocks, fast, slow, start=None, end=None):
     return trades
 
 
-if __name__ == '__main__':
-    start = "2017-07-09"
-    end = "2018-07-09"
-    df = dataframe(load_json("AAPL"))
-    for i in range(1, 2):
-        stock_adj = regime(df, 10, 18, start, end, show=False)
-        stock_adj_signals = add_signals(stock_adj, show=False)
-        signals = get_signal(stock_adj_signals, show=False, sort=True, filter=True)
-        stock = add_profit(signals, False)
-        stock = add_low(df, stock, False)
-        stock = back_test(stock, show=True, cash=1000, port_value=1, batch=1, stoploss=.1, fee=10)
+# if __name__ == '__main__':
+#     start = "2017-07-09"
+#     end = "2018-07-09"
+#     df = dataframe(load_json("AAPL"))
+#     for i in range(1, 2):
+#         stock_adj = regime(df, 10, 18, start, end, show=False)
+#         stock_adj_signals = add_signals(stock_adj, show=False)
+#         signals = get_signal(stock_adj_signals, show=False, sort=True, filter=True)
+#         stock = add_profit(signals, False)
+#         stock = add_low(df, stock, False)
+#         stock = back_test(stock, show=True, cash=1000, port_value=1, batch=1, stoploss=.1, fee=10)
 
     #print(multi_backtest(multicrossover(["aapl", "AMZN", "GOOG", "HPQ"], 20, 50, start, end), 100000).to_string())

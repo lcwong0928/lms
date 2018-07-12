@@ -1,4 +1,6 @@
 from .pull import data, symbols, write
+from .display import parse, visual
+import matplotlib.pyplot as plt
 import argparse
 import datetime
 import sys
@@ -101,7 +103,7 @@ class Lms(object):
     def display(self):
         parser = argparse.ArgumentParser(
             description='display data given various methods')
-        parser.add_argument('func', help="df, simple, candlestick, ma, model, ribbon")
+        parser.add_argument('func', help="dataframe, simple, candlestick, ma, model, ribbon")
         args = parser.parse_args(sys.argv[2:3])
 
         if not hasattr(self, "display_" + args.func):
@@ -109,116 +111,111 @@ class Lms(object):
             exit(1)
         getattr(self, "display_" + args.func)()
 
-    # def display_df(self):
-    #     parser = argparse.ArgumentParser(
-    #         description=' raw data representation of provided symbol')
-    #     parser.add_argument('symbol', help="symbol of desired stock")
-    #     parser.add_argument('-s', '--start', default=None, type=str, help="start date formatted as YYYY-MM-DD")
-    #     parser.add_argument('-e', '--end', default=str(datetime.date.today()), type=str,
-    #                         help="end date formatted as YYYY-MM-DD")
-    #
-    #     args = parser.parse_args(sys.argv[3:])
-    #
-    #     if args.start is not None:
-    #         try:
-    #             print(dataframe(load_json(args.symbol))[args.start:args.end])
-    #         except KeyError:
-    #             print("Invalid date time format.")
-    #     else:
-    #         print(dataframe(load_json(args.symbol)))
-    #
-    # def display_simple(self):
-    #     parser = argparse.ArgumentParser(
-    #         description='simple line chart representation of provided symbol')
-    #     parser.add_argument('symbol', help="symbol of desired stock")
-    #     parser.add_argument('-s', '--start', default=None, type=str, help="start date formatted as YYYY-MM-DD")
-    #     parser.add_argument('-e', '--end', default=str(datetime.date.today()), type=str,
-    #                         help="end date formatted as YYYY-MM-DD")
-    #
-    #     args = parser.parse_args(sys.argv[3:])
-    #
-    #     if args.start is not None:
-    #         try:
-    #             simple_linechart(args.symbol, args.start, args.end, block=True)
-    #         except KeyError:
-    #             print("Invalid date time format.")
-    #     else:
-    #         simple_linechart(args.symbol, block=True)
-    #
-    # def display_candlestick(self):
-    #     parser = argparse.ArgumentParser(
-    #         description='Japanese candlestick plot of provided symbol')
-    #     parser.add_argument('symbol', help="symbol of desired stock")
-    #     parser.add_argument('-s', '--start', default=None, type=str, help="start date formatted as YYYY-MM-DD")
-    #     parser.add_argument('-e', '--end', default=str(datetime.date.today()), type=str,
-    #                         help="end date formatted as YYYY-MM-DD")
-    #
-    #     args = parser.parse_args(sys.argv[3:])
-    #
-    #     if args.start is not None:
-    #         try:
-    #             candlestick(args.symbol, args.start, args.end, block=True)
-    #         except KeyError:
-    #             print("Invalid date time format.")
-    #     else:
-    #         candlestick(args.symbol, block=True)
-    #
-    # def display_ribbon(self):
-    #     parser = argparse.ArgumentParser(
-    #         description='moving average ribbon of provided symbol')
-    #     parser.add_argument('symbol', help="symbol of desired stock")
-    #     parser.add_argument('-s', '--start', default=None, type=str, help="start date formatted as YYYY-MM-DD")
-    #     parser.add_argument('-e', '--end', default=str(datetime.date.today()), type=str,
-    #                         help="end date formatted as YYYY-MM-DD")
-    #
-    #     args = parser.parse_args(sys.argv[3:])
-    #
-    #     ma = [i for i in range(10, 210, 10)]
-    #     if args.start is not None:
-    #         try:
-    #             moving_averages_adv(args.symbol, ma, args.start, args.end, block=True)
-    #         except KeyError:
-    #             print("Invalid date time format.")
-    #     else:
-    #         moving_averages_adv(args.symbol, ma, block=True)
-    #
-    # def display_ma(self):
-    #     parser = argparse.ArgumentParser(
-    #         description='Japanese candlestick plot of provided symbol with moving average 20d, 50d, 200d')
-    #     parser.add_argument('symbol', help="symbol of desired stock")
-    #     parser.add_argument('-s', '--start', default=None, type=str, help="start date formatted as YYYY-MM-DD")
-    #     parser.add_argument('-e', '--end', default=str(datetime.date.today()), type=str,
-    #                         help="end date formatted as YYYY-MM-DD")
-    #
-    #     args = parser.parse_args(sys.argv[3:])
-    #
-    #     if args.start is not None:
-    #         try:
-    #             moving_averages(args.symbol, args.start, args.end, block=True)
-    #         except KeyError:
-    #             print("Invalid date time format.")
-    #     else:
-    #         moving_averages(args.symbol, block=True)
-    #
-    # def display_model(self):
-    #     parser = argparse.ArgumentParser(
-    #         description='various plot of provided symbol')
-    #     parser.add_argument('type', help="return, growth, increase, change")
-    #     parser.add_argument('-l', '--list', nargs='+', type=str, help='-l sym sym sym', required=True)
-    #     parser.add_argument('-s', '--start', default=None, type=str, help="start date formatted as YYYY-MM-DD")
-    #     parser.add_argument('-e', '--end', default=str(datetime.date.today()), type=str,
-    #                         help="end date formatted as YYYY-MM-DD")
-    #
-    #     args = parser.parse_args(sys.argv[3:])
-    #
-    #     if args.start is not None:
-    #         try:
-    #             graph_model(args.list, args.type, args.start, args.end, block=True)
-    #         except KeyError:
-    #             print("Invalid date time format.")
-    #     else:
-    #         graph_model(args.list, args.type, block=True)
+    def display_dataframe(self):
+        parser = argparse.ArgumentParser(
+            description='raw data representation of provided symbol')
+        parser.add_argument('symbol', help="symbol of desired equity")
+        parser.add_argument('-f', '--func', help="refer to alpha vantage",
+                            type=str, default="TIME_SERIES_DAILY_ADJUSTED")
+        parser.add_argument('-s', '--start', default=None, type=str,
+                            help="start date formatted as YYYY-MM-DD")
+        parser.add_argument('-e', '--end', default=str(datetime.date.today()), type=str,
+                            help="end date formatted as YYYY-MM-DD")
+        args = parser.parse_args(sys.argv[3:])
 
+        directory = root_dir + "/lms/data/json/" + args.func + "/"
+        json_data = parse.load_json(args.symbol, directory, args.func)
+
+        try:
+            print(visual.clip(parse.dataframe(json_data, args.func), args.start, args.end).to_string())
+        except KeyError:
+            print("Invalid date time YYYY-MM-DD format.")
+
+    def display_simple(self):
+        parser = argparse.ArgumentParser(
+            description='simple line chart representation of provided symbol(s)')
+        parser.add_argument('symbols', nargs='+', type=str, help="symbol(s) of desired equity")
+        parser = self.display_populate(parser)
+        args = parser.parse_args(sys.argv[3:])
+
+        try:
+            for symbol in args.symbols:
+                visual.simple_linechart(symbol, root_dir, args.func, args.start, args.end, save=args.save)
+            plt.show()
+        except KeyError:
+            print("Invalid date time YYYY-MM-DD format.")
+
+    def display_candlestick(self):
+        parser = argparse.ArgumentParser(
+            description='Japanese candlestick plot of provided symbol')
+        parser.add_argument('symbols', nargs='+', type=str, help="symbol(s) of desired equity")
+        parser = self.display_populate(parser)
+        args = parser.parse_args(sys.argv[3:])
+
+        try:
+            for symbol in args.symbols:
+                visual.candlesticks(symbol, root_dir, args.func, args.start, args.end, save=args.save)
+            plt.show()
+        except KeyError:
+            print("Invalid date time YYYY-MM-DD format.")
+
+    def display_ribbon(self):
+        parser = argparse.ArgumentParser(
+            description='moving average ribbon of provided symbol')
+        parser.add_argument('symbols', nargs='+', type=str, help="symbol(s) of desired equity")
+        parser = self.display_populate(parser)
+        args = parser.parse_args(sys.argv[3:])
+
+        ma = [i for i in range(10, 210, 10)]
+        try:
+            for symbol in args.symbols:
+                visual.moving_averages(symbol, ma, root_dir, args.func, args.start, args.end, save=args.save)
+            plt.show()
+
+        except KeyError:
+            print("Invalid date time format.")
+
+    def display_ma(self):
+        parser = argparse.ArgumentParser(
+            description='Japanese candlestick plot of provided symbol with moving average 20d, 50d, 200d')
+        parser.add_argument('symbols', nargs='+', type=str, help="symbol(s) of desired equity")
+        parser.add_argument("--movingaverages", nargs='*', type=int,
+                            help="desired moving_averages(s)", default=[20,50,200])
+        parser = self.display_populate(parser)
+        args = parser.parse_args(sys.argv[3:])
+
+        try:
+            for symbol in args.symbols:
+                visual.moving_averages(symbol, args.movingaverages, root_dir, args.func, args.start, args.end, save=args.save)
+            plt.show()
+
+        except KeyError:
+            print("Invalid date time format.")
+
+    def display_model(self):
+        parser = argparse.ArgumentParser(
+            description='various plot of provided symbol')
+        parser.add_argument('type', help="return, growth, increase, change")
+        parser.add_argument('symbols', nargs='+', type=str, help="symbol(s) of desired equity")
+        parser = self.display_populate(parser)
+        args = parser.parse_args(sys.argv[3:])
+
+        try:
+            visual.graph_model(args.type, args.symbols, root_dir, args.func, args.start, args.end, save=args.save)
+            plt.show()
+        except KeyError:
+            print("Invalid date time YYYY-MM-DD format.")
+
+    def display_populate(self, parser):
+        parser.add_argument('-f', '--func', help="refer to alpha vantage",
+                            type=str, default="TIME_SERIES_DAILY_ADJUSTED")
+        parser.add_argument('-s', '--start', default=None, type=str,
+                            help="start date formatted as YYYY-MM-DD")
+        parser.add_argument('-e', '--end', default=str(datetime.date.today()), type=str,
+                            help="end date formatted as YYYY-MM-DD")
+        parser.add_argument('-sv', '--save', action='store_const',
+                            default=False, const=True, help="saves the plot")
+        return parser
 
 
 
